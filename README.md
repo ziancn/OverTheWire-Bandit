@@ -83,3 +83,61 @@ find . -type f -size 33c -user bandit7 -group bandit6 | xargs cat
 ```
 
 ## Level 7 -> Level 8
+Goal: The password for the next level is stored in the file data.txt next to the word "millionth".
+
+Command `grep` will help us find the line of text that contains "millionth".
+```
+grep millionth data.txt
+```
+
+## Level 8 -> Level 9
+Goal: The password for the next level is stored in the file data.txt and is the only line of text that occurs only once.
+
+Command `uniq` with flag `-u` will display only unique values appeared. However, for `uniq` to be able to filter out the unique lines, the input should be sorted. So we `sort` first and pipe it to `uniq`.
+
+```
+sort data.txt | uniq -u
+```
+
+## Level 9 -> Level 10
+Goal: The password for the next level is stored in the file data.txt in one of the few human-readable strings, preceded by several "=" characters.
+
+Similar to preview levels, use `strings` to filter out ASCII-like characters and we use grep to locate lines with "=".
+```
+strings data.txt | grep =
+```
+
+## Level 10 -> Level 11
+Goal: The password for the next level is stored in the file data.txt, which contains base64 encoded data.
+
+To decode the `base64` encoded data, we use `-d` flag.
+```
+base64 -d data.txt
+```
+
+## Level 11 -> Level 12
+Goal: The password for the next level is stored in the file data.txt, where all lowercase (a-z) and uppercase (A-Z) letters have been rotated by 13 positions.
+
+The rotation of 13 positions is done by `tr` command, which stands for "translate". `tr` is used like `tr [old_char_sets] [new_char_sets]`. There is no 
+built-in command in Linux to encode and decode ROT13.
+
+ROT will substitute A to N, ..., Z->M. `A-Za-z` stands for the 
+```
+tr 'A-Za-z' 'N-ZA-Mn-za-m' < data.txt
+```
+
+## Level 12 -> Level 13
+Goal: The password for the next level is stored in the file data.txt, which is a hexdump of a file that has been repeatedly compressed. For this level it may be useful to create a directory under /tmp in which you can work. Use mkdir with a hard to guess directory name. Or better, use the command “mktemp -d”. Then copy the datafile using cp, and rename it using mv (read the manpages!).
+
+`data.txt` is the output of a hexdump. To revert hexdump we can use command `xxd` with flag `-r` which means revert. First we use `mktemp -d` to create a temporary directory to store tmp files. Then we can use `file` to see what type of file it is.
+```
+# Assume you've saved your tmp dir to variable $tmpdir
+xxd -r data.txt > $tmpdir/data.binary
+file $tmpdir/data.binary
+# Repeat this step to check each decompressed file and rename file accordingly.
+gzip -d $filename
+bzip2 -d $ filename
+tar -xf $filename
+```
+
+## Level 13
