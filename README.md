@@ -140,4 +140,29 @@ bzip2 -d $ filename
 tar -xf $filename
 ```
 
-## Level 13
+## Level 13 -> Level 14
+Goal: The password for the next level is stored in /etc/bandit_pass/bandit14 and can only be read by user bandit14. For this level, you don’t get the next password, but you get a private SSH key that can be used to log into the next level. Note: localhost is a hostname that refers to the machine you are working on.
+
+We can use the provided ssh key to login as bandit14 without a password. Use flag `-i` of identity_file to specify the private key. 
+```
+ssh -i sshkey.private bandit14@localhost -p 2220
+```
+
+## Level 14 -> Level 15
+Goal: The password for the next level can be retrieved by submitting the password of the current level to port 30000 on localhost.
+
+First we get the password of bandit14 by `cat /etc/bandit_pass/bandit14`. Then we need to submit the password to port 30000.
+```
+nc localhost 30000
+# Then enter your password.
+```
+
+## Level 15 -> Level 16
+Goal: The password for the next level can be retrieved by submitting the password of the current level to port 30001 on localhost using SSL/TLS encryption.
+
+```
+openssl s_client -connect localhost:30001
+# Then enter your passwrod.
+```
+
+## Level 16 -> Level 17
