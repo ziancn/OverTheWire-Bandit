@@ -166,3 +166,32 @@ openssl s_client -connect localhost:30001
 ```
 
 ## Level 16 -> Level 17
+Goal: The credentials for the next level can be retrieved by submitting the password of the current level to a port on localhost in the range 31000 to 32000. First find out which of these ports have a server listening on them. Then find out which of those speak SSL/TLS and which don’t. There is only 1 server that will give the next credentials, the others will simply send back to you whatever you send to it.
+
+`nmap` is a network scanner tool.
+```
+nmap -p 31000-32000 --open --script ssl-cert localhost
+# There are a few ports to try.
+openssl s_client -connect localhost:31790
+``` 
+But I encounter such case: when the password is entered, it prompted "KEYUPDATE". I am not sure what this means but adding flag `-ign_eof` fixed the problem.
+```
+openssl s_client -connect localhost:31790 -ign_eof
+```
+Use `mktemp -d`, store the ssh key and `chmod 400` to make the file executable. Use `ssh` to connect to next level.
+
+## Level 17 -> Level 18
+Goal: There are 2 files in the homedirectory: `passwords.old` and `passwords.new`. The password for the next level is in `passwords.new` and is the only line that has been changed between `passwords.old` and `passwords.new`.
+
+Command `diff` will print the differences between files.
+```
+diff passwords.old passwords.new
+```
+
+## Level 18 -> Level 19
+Goal: The password for the next level is stored in a file readme in the homedirectory. Unfortunately, someone has modified .bashrc to log you out when you log in with SSH.
+
+`.bashrc` is a file that will be run when you log into a terminal. Since we cannot login, we need some other ways to cat the password. We can directly pass the command via `ssh`.
+```
+ssh bandit18@bandit.labs.overthewire.org -p 2220 cat readme
+```
