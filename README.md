@@ -195,3 +195,104 @@ Goal: The password for the next level is stored in a file readme in the homedire
 ```
 ssh bandit18@bandit.labs.overthewire.org -p 2220 cat readme
 ```
+
+## Level 19 -> Level 20
+Goal: To gain access to the next level, you should use the setuid binary in the homedirectory. Execute it without arguments to find out how to use it. The password for this level can be found in the usual place (/etc/bandit_pass), after you have used the setuid binary.
+
+We can use the binary `bandit20-do` to perform command as `bandit20`. Since this file is not in system path, use the relative path to use it.
+```
+./bandit20-do cat /etc/bandit_pass/bandit20
+```
+
+## Level 20 -> Level 21
+Goal: There is a setuid binary in the homedirectory that does the following: it makes a connection to localhost on the port you specify as a commandline argument. It then reads a line of text from the connection and compares it to the password in the previous level (bandit20). If the password is correct, it will transmit the password for the next level (bandit21).
+
+We I directly tried `./suconnect 2220`, the line it reads from the connection is `SSH-2.0-OpenSSH_9.6p1`. If we can find a port that has the password of level 20 in the first line of the connection, then we will be able to get the password of level 21.
+
+Here we need to use `nc` again to achieve such goal. We need to create a port that fits our needs...
+```
+echo -n '0qXahG8ZjOVMN9Ghs7iOWsCfZyXOUbYO' | nc -l -p 9999 &
+```
+
+Here the `-n` will make sure `echo` does not output the trailing newline, and `&` will make this process run in the background.
+```
+./suconne
+```
+
+## Level 21 -> Level 22
+Goal: A program is running automatically at regular intervals from cron, the time-based job scheduler. Look in /etc/cron.d/ for the configuration and see what command is being executed.
+
+First we `cd` to `/etc/cron.d/` and check the cronjobs there.
+```
+bandit21@bandit:/etc/cron.d$ cat cronjob_bandit22
+@reboot bandit22 /usr/bin/cronjob_bandit22.sh &> /dev/null
+* * * * * bandit22 /usr/bin/cronjob_bandit22.sh &> /dev/null
+```
+
+Then we look into the scripts that bandit22 runs regularly.
+```
+bandit21@bandit:/etc/cron.d$ cat /usr/bin/cronjob_bandit22.sh
+#!/bin/bash
+chmod 644 /tmp/t7O6lds9S0RqQh9aMcz6ShpAoZKF7fgv
+cat /etc/bandit_pass/bandit22 > /tmp/t7O6lds9S0RqQh9aMcz6ShpAoZKF7fgv
+```
+
+The password of level 22 is save to `/tmp/t7O6lds9S0RqQh9aMcz6ShpAoZKF7fgv`.
+
+## Level 22 -> Level 23
+Goal: A program is running automatically at regular intervals from cron, the time-based job scheduler. Look in /etc/cron.d/ for the configuration and see what command is being executed.
+
+Same as previous level, we see bandit23 cronjob.
+```
+bandit22@bandit:/etc/cron.d$ cat /usr/bin/cronjob_bandit23.sh
+#!/bin/bash
+
+myname=$(whoami)
+mytarget=$(echo I am user $myname | md5sum | cut -d ' ' -f 1)
+
+echo "Copying passwordfile /etc/bandit_pass/$myname to /tmp/$mytarget"
+
+cat /etc/bandit_pass/$myname > /tmp/$mytarget
+```
+
+We know that `whoami` for bandit23 returns `bandit23`.
+```
+bandit22@bandit:/etc/cron.d$ echo I am user bandit23 | md5sum | cut -d ' ' -f 1
+8ca319486bfbbc3663ea0fbe81326349
+```
+
+Therefore we can find the password at `/tmp/8ca319486bfbbc3663ea0fbe81326349`
+
+## Level 23 -> Level 24
+Goal: A program is running automatically at regular intervals from cron, the time-based job scheduler. Look in /etc/cron.d/ for the configuration and see what command is being executed.
+
+Same as preview levels, we check the cronjob first.
+```
+bandit23@bandit:/etc/cron.d$ cat /usr/bin/cronjob_bandit24.sh
+#!/bin/bash
+
+myname=$(whoami)
+
+cd /var/spool/$myname/foo
+echo "Executing and deleting all scripts in /var/spool/$myname/foo:"
+for i in * .*;
+do
+    if [ "$i" != "." -a "$i" != ".." ];
+    then
+        echo "Handling $i"
+        owner="$(stat --format "%U" ./$i)"
+        if [ "${owner}" = "bandit23" ]; then
+            timeout -s 9 60 ./$i
+        fi
+        rm -f ./$i
+    fi
+done
+```
+
+Similarly we can know that the username is `bandit24`. Then this script will `cd` to `/var/spool/bandit24/foo`. This job will execute the file owned by `bandit23` (our current level) under this directory. So, we can write a shell script that cat the password of level 24 to our tmp directory.
+```
+#!/bin/bash
+cat /etc/bandit_pass/bandit24 > /tmp/tmp.PfDlS1zMzF/password24
+```
+
+Then we copy the script into `/var/spool/bandit24/foo` and we should see `password24` in our temp dir.
