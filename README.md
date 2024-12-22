@@ -315,4 +315,161 @@ Then we pass all possibilities to port 30002.
 cat tmp.txt | nc localhost 30002
 ```
 
-Level 25 -> Level 26
+## Level 25 -> Level 26
+Goal: Logging in to bandit26 from bandit25 should be fairly easy… The shell for user bandit26 is not /bin/bash, but something else. Find out what it is, how it works and how to break out of it.
+
+Here we need to find a way to set the bash to `/bin/bash`. We need to see what bash is used for bandit26: `cat /etc/passwd | grep bandit26`. The shell used is `/usr/bin/showtext`. The content of the file is:
+```
+#!/bin/sh
+
+export TERM=linux
+
+exec more ~/text.txt
+exit 0
+```
+
+From what we can see the text.txt is very short, so the `more` mode will exit after all content is loaded. We can adjust the window size of the terminal to make that `more` cannot laod the content at once.
+
+When we are in `more` mode, we use `:set shell=/bin/bash` to change the shell to `/bin/bash` and use `:shell` to start a shell.
+
+## Level 26 -> Level 27
+Goal: Good job getting a shell! Now hurry and grab the password for bandit27!
+
+```
+./bandit27-do cat /etc/bandit_pass/bandit27
+```
+
+## Level 27 -> Leve 28
+Goal: There is a git repository at ssh://bandit27-git@localhost/home/bandit27-git/repo via the port 2220. The password for the user bandit27-git is the same as for the user bandit27.
+
+```
+git clone ssh://bandit27-git@localhost:2220/home/bandit27-git/repo
+```
+
+## Level 28 -> Level 29
+Goal: There is a git repository at ssh://bandit28-git@localhost/home/bandit28-git/repo via the port 2220. The password for the user bandit28-git is the same as for the user bandit28.
+
+```
+git clone ssh://bandit28-git@localhost:2220/home/bandit28-git/repo
+```
+
+We find below in `README.md`:
+```
+# Bandit Notes
+Some notes for level29 of bandit.
+
+## credentials
+
+- username: bandit29
+- password: xxxxxxxxxx
+```
+
+We can use `git log` to check history of commits and use `git show` to show changes.
+```
+bandit28@bandit:/tmp/tmp.fyNyOMdfoL/repo$ git show 817e303aa6c2b207ea043c7bba1bb7575dc4ea73
+commit 817e303aa6c2b207ea043c7bba1bb7575dc4ea73 (HEAD -> master, origin/master, origin/HEAD)
+Author: Morla Porla <morla@overthewire.org>
+Date:   Thu Sep 19 07:08:39 2024 +0000
+
+    fix info leak
+
+diff --git a/README.md b/README.md
+index d4e3b74..5c6457b 100644
+--- a/README.md
++++ b/README.md
+@@ -4,5 +4,5 @@ Some notes for level29 of bandit.
+ ## credentials
+
+ - username: bandit29
+-- password: 4pT1t5DENaYuqnqvadYs1oE4QLCdjmJ7
++- password: xxxxxxxxxx
+```
+
+## Level 29 -> Level 30
+Goal: There is a git repository at ssh://bandit29-git@localhost/home/bandit29-git/repo via the port 2220. The password for the user bandit29-git is the same as for the user bandit29.
+
+```
+bandit29@bandit:/tmp/tmp.kwvVFEzQAa/repo$ cat README.md 
+# Bandit Notes
+Some notes for bandit30 of bandit.
+
+## credentials
+
+- username: bandit30
+- password: <no passwords in production!>
+```
+
+Maybe production branch does not contain this info, let's see if we have other branches by `git branch -a`. We see another branch: remotes/origin/dev, so we change to another branch by `git checkout remotes/origin/dev`.
+
+## Level 30 -> Level 31
+Goal: There is a git repository at ssh://bandit30-git@localhost/home/bandit30-git/repo via the port 2220. The password for the user bandit30-git is the same as for the user bandit30.
+
+```
+bandit30@bandit:/tmp/tmp.8TSKpWu55n/repo$ cat README.md 
+just an epmty file... muahaha
+```
+
+Also, we didn't find anything from `git log`... This level we need `git tag`...
+```
+# There is a tag called "secret"
+git show secret
+```
+
+## Level 31 -> Level 32
+Goal: There is a git repository at ssh://bandit31-git@localhost/home/bandit31-git/repo via the port 2220. The password for the user bandit31-git is the same as for the user bandit31.
+
+```
+bandit31@bandit:/tmp/tmp.Q4YmDwirnD/repo$ cat README.md 
+This time your task is to push a file to the remote repository.
+
+Details:
+    File name: key.txt
+    Content: 'May I come in?'
+    Branch: master
+```
+
+There is how we solve this:
+```
+echo 'May I come in?' > key.txt
+git add key.txt
+git commit -m "Some messages here."
+git push origin master
+```
+
+We encountered this during git add, this is because "*.txt" is in git ignore. We can add flag `-f` to add anyway.
+```
+bandit31@bandit:/tmp/tmp.Q4YmDwirnD/repo$ git add key.txt
+The following paths are ignored by one of your .gitignore files:
+key.txt
+hint: Use -f if you really want to add them.
+hint: Turn this message off by running
+hint: "git config advice.addIgnoredFile false"
+```
+
+## Level 32 -> Level 33
+Goal: After all this git stuff, it’s time for another escape. Good luck!
+
+This is what we see when we log in and we tries a few commands.
+```
+WELCOME TO THE UPPERCASE SHELL
+>> ok
+sh: 1: OK: Permission denied
+>> ls
+sh: 1: LS: Permission denied
+```
+
+We can use `$0` to return the name of the current shell like bash or zsh. We use `whoami` and see `bandit33` and we can `cat` the password of level 33.
+
+## Level 33
+
+```
+bandit33@bandit:~$ cat README.txt 
+Congratulations on solving the last level of this game!
+
+At this moment, there are no more levels to play in this game. However, we are constantly working
+on new levels and will most likely expand this game with more levels soon.
+Keep an eye out for an announcement on our usual communication channels!
+In the meantime, you could play some of our other wargames.
+
+If you have an idea for an awesome new level, please let us know!
+```
